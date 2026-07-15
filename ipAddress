@@ -1,250 +1,380 @@
-#!/bin/bash -e
-#Niassoh Taarmos[CyberCoder]
-#T̂͗̋͛̏ͨ̚͜a͍͚͖͙̞̰̔ͣͩ̈̍̅̑a͈͍̐͛̎̑́͐r͏͉̖̙̲̘͎͇m̴̪ͯ̌o̰̼͔̪͈̺̟ͤ͌̓s̡͙̪̣͚̮̠͇̈
-#Mystylecustommodifiedcolorcode*
-#Normal below are the colors
-white='\033[1;37m'
-red='\033[1;31m'
-yellow='\033[1;33m'
-green='\033[1;32m'
-purple='\033[1;35m'
-black='\033[1;30m'
-blue='\033[1;34m'
-cyan='\033[1;36m'
-finished='\e[0m'
-#Lite below are the colors
-whitelite='\033[0;37m'
-redlite='\033[0;31m'
-yellowlite='\033[0;33m'
-greenlite='\033[0;32m'
-purplelite='\033[0;35m'
-blacklite='\033[0;30m'
-bluelite='\033[0;34m'
-cyanlite='\033[0;36m'
-#To mix below are the colors
-greenredmix='\033[1;32;41m'
-whiteredmix='\033[1;37;41m'
-bluemix='\033[1;37;44m'
-bluewhitemix='\033[0;37;44m'
-purplewhitemix='\033[0;37;45m'
-#×××××××××××××××××××××××××××××××××××:
-function checkinternet(){
-clear;reset
-source <(echo 'dHRlIC0tZnJhbWUtcmF0ZSA2NjYgLWkgJFBSRUZJWC9zaGFyZS9pZ2hvc3QvbmVlZC5pbnRlcm5ldCAtLXJhbmRvbS1lZmZlY3QgLS1leGNsdWRlLWVmZmVjdHMgbWF0cml4' | base64 -d)
-echo -e "${red} [${yellow}¥${red}] ${purple}First Disconnect Any Connected VPN${finished}\n"
-sleep 3
-printf "${redlite}[${green}✔${redlite}] ${white}Checking your Internet Connection\r" ; sleep 1
-printf "${redlite}[${green}✔${redlite}] ${white}Checking your Internet Connection${redlite}.\r" ; sleep 1
-printf "${redlite}[${green}✔${redlite}] ${white}Checking your Internet Connection${redlite}..\r" ; sleep 1
-printf "${redlite}[${green}✔${redlite}] ${white}Checking your Internet Connection${redlite}...\r" ; sleep 1
-sleep 1
-echo -e ""
-ping -c 1 google.com > /dev/null 2>&1
-if [[ "$?" != 0 ]]
- then
-    echo -e "${yellow} [${red}-${yellow}] ${white}Internet: ${red}FAILED${finished}\n"
-    sleep 1
-    echo -e "${yellow} ${white}[${cyan}+${white}] ${white}This Script Need ${green}Active ${white}Internet Connection${redlite}.${finished}"
-    sleep 1
-    echo -e ""
-    echo -e "               ${white}Not-Connected ${red}Exit${finished}\n"
-    sleep 1
-    exit
-  else
-    echo -e "${red} [${green}√${red}] ${white}Internet:${green} CONNECTED\n${finished}"
-    sleep 1
-    printf "${redlite}[${green}✔${redlite}] ${white}Please wait redirecting\r" ; sleep 1
-    printf "${redlite}[${green}✔${redlite}] ${white}Please wait redirecting${redlite}.\r" ; sleep 1
-    printf "${redlite}[${green}✔${redlite}] ${white}Please wait redirecting${redlite}..\r" ; sleep 1
-    printf "${redlite}[${green}✔${redlite}] ${white}Please wait redirecting${redlite}...\r" ; sleep 1
-    sleep 1
-  fi
+#!/usr/bin/env bash
+# ============================================================
+# ipAddress Tool – Maintained by Niassoh Taarmos (CyberCoder)
+# ============================================================
+set -euo pipefail
+
+# ---------------------------
+# Global Configuration
+# ---------------------------
+readonly SCRIPT_NAME="ipAddress"
+readonly BASE_DIR="$HOME/ipAddress"
+readonly TARBALL="$BASE_DIR/AGITFOLDER.tar.gz"
+readonly EXTRACT_DIR="$BASE_DIR"
+readonly ANDROID_DIR="/sdcard/HTTPNET"
+
+# Color definitions (bold and light variants)
+readonly C_WHITE='\033[1;37m'
+readonly C_RED='\033[1;31m'
+readonly C_YELLOW='\033[1;33m'
+readonly C_GREEN='\033[1;32m'
+readonly C_PURPLE='\033[1;35m'
+readonly C_BLACK='\033[1;30m'
+readonly C_BLUE='\033[1;34m'
+readonly C_CYAN='\033[1;36m'
+
+readonly C_WHITE_L='\033[0;37m'
+readonly C_RED_L='\033[0;31m'
+readonly C_YELLOW_L='\033[0;33m'
+readonly C_GREEN_L='\033[0;32m'
+readonly C_PURPLE_L='\033[0;35m'
+readonly C_BLACK_L='\033[0;30m'
+readonly C_BLUE_L='\033[0;34m'
+readonly C_CYAN_L='\033[0;36m'
+
+# Mixed backgrounds
+readonly C_GREEN_RED='\033[1;32;41m'
+readonly C_WHITE_RED='\033[1;37;41m'
+readonly C_BLUE_MIX='\033[1;37;44m'
+readonly C_BLUE_WHITE='\033[0;37;44m'
+readonly C_PURPLE_WHITE='\033[0;37;45m'
+
+readonly C_RESET='\e[0m'
+
+# ---------------------------
+# Utility Functions
+# ---------------------------
+
+# Prints a base64‑decoded command and sources it (used for animations)
+source_animation() {
+    local encoded="$1"
+    source <(echo "$encoded" | base64 -d)
 }
-#T̂͗̋͛̏ͨ̚͜a͍͚͖͙̞̰̔ͣͩ̈̍̅̑a͈͍̐͛̎̑́͐r͏͉̖̙̲̘͎͇m̴̪ͯ̌o̰̼͔̪͈̺̟ͤ͌̓s̡͙̪̣͚̮̠͇̈
-spinner() {
-# simulate process
-sleep 5 & pid=$!
-delay=0.12
-spinner=('█■■■■' '■█■■■' '■■█■■' '■■■█■' '■■■■█')
-# hide cursor
-tput civis
-while kill -0 "$pid" 2>/dev/null; do
-    for i in "${spinner[@]}"; do
 
-        # stop instantly if process finished
-        kill -0 "$pid" 2>/dev/null || break
+# Check internet connectivity
+check_internet() {
+    clear
+    reset
+    source_animation 'dHRlIC0tZnJhbWUtcmF0ZSA2NjYgLWkgJFBSRUZJWC9zaGFyZS9pZ2hvc3QvbmVlZC5pbnRlcm5ldCAtLXJhbmRvbS1lZmZlY3QgLS1leGNsdWRlLWVmZmVjdHMgbWF0cml4'
 
-        printf "\r\033[K\033[1;32mDownloading Please wait...\033[1;33m [%s]\033[0m" "$i"
+    echo -e "${C_RED} [${C_YELLOW}¥${C_RED}] ${C_PURPLE}First Disconnect Any Connected VPN${C_RESET}\n"
+    sleep 3
 
-        sleep "$delay"
+    # Animated "Checking" message
+    for step in '' '.' '..' '...'; do
+        printf "\r${C_RED_L}[${C_GREEN}✔${C_RED_L}] ${C_WHITE}Checking your Internet Connection${step}"
+        sleep 1
     done
-done
-wait "$pid" 2>/dev/null
-# show cursor
-tput cnorm
-printf "\r\033[K\033[0;31m[\033[1;32mDone!\033[0;31m]\033[0m\n"
-echo ''
-}
-#T̂͗̋͛̏ͨ̚͜a͍͚͖͙̞̰̔ͣͩ̈̍̅̑a͈͍̐͛̎̑́͐r͏͉̖̙̲̘͎͇m̴̪ͯ̌o̰̼͔̪͈̺̟ͤ͌̓s̡͙̪̣͚̮̠͇̈
-spinner2(){
-sleep 2 & PID=$!
-echo -e "IT MAY TAKE SOME TIME, BE PATIENT."
-printf "\033[0;31m["
-for i in {1..20}; do
-    printf "\033[1;32m▓"
-    sleep 0.10
-done
-wait $PID 2>/dev/null
-printf "\033[0;31m] \033[1;32mdone\033[0;31m!\e[0m\n"
-echo ''
-}
-#T̂͗̋͛̏ͨ̚͜a͍͚͖͙̞̰̔ͣͩ̈̍̅̑a͈͍̐͛̎̑́͐r͏͉̖̙̲̘͎͇m̴̪ͯ̌o̰̼͔̪͈̺̟ͤ͌̓s̡͙̪̣͚̮̠͇̈
-checkxvzf() {
-    TARBALL="$HOME/ipAddress/AGITFOLDER.tar.gz"
+    echo -e ""
 
-    # If file is missing, go to main menu silently.
-    if [ ! -f "$TARBALL" ]; then
-        #T̂͗̋͛̏ͨ̚͜a͍͚͖͙̞̰̔ͣͩ̈̍̅̑a͈͍̐͛̎̑́͐r͏͉̖̙̲̘͎͇m̴̪ͯ̌o̰̼͔̪͈̺̟ͤ͌̓s̡͙̪̣͚̮̠͇̈
-        return 0
-    fi
-
-    # Extract and remove only if extraction succeeds
-    if tar -xvzf "$TARBALL" -C "$HOME/ipAddress/" &> /dev/null; then
-        rm -f "$TARBALL"
-        echo "Server extracted and archive removed."
+    if ping -c 1 google.com >/dev/null 2>&1; then
+        echo -e "${C_RED} [${C_GREEN}√${C_RED}] ${C_WHITE}Internet:${C_GREEN} CONNECTED\n${C_RESET}"
+        sleep 1
+        for step in '' '.' '..' '...'; do
+            printf "\r${C_RED_L}[${C_GREEN}✔${C_RED_L}] ${C_WHITE}Please wait redirecting${step}"
+            sleep 1
+        done
+        sleep 1
     else
-        echo "Extraction failed (corrupt archive?)"
+        echo -e "${C_YELLOW} [${C_RED}-${C_YELLOW}] ${C_WHITE}Internet: ${C_RED}FAILED${C_RESET}\n"
+        sleep 1
+        echo -e "${C_YELLOW} ${C_WHITE}[${C_CYAN}+${C_WHITE}] ${C_WHITE}This Script Needs ${C_GREEN}Active ${C_WHITE}Internet Connection${C_RED_L}.${C_RESET}"
+        sleep 1
+        echo -e ""
+        echo -e "               ${C_WHITE}Not-Connected ${C_RED}Exit${C_RESET}\n"
+        sleep 1
+        exit 1
     fi
-
-    # Return to main menu after finishing.
-    main_menu
 }
-#T̂͗̋͛̏ͨ̚͜a͍͚͖͙̞̰̔ͣͩ̈̍̅̑a͈͍̐͛̎̑́͐r͏͉̖̙̲̘͎͇m̴̪ͯ̌o̰̼͔̪͈̺̟ͤ͌̓s̡͙̪̣͚̮̠͇̈
-function main_menu(){
-echo -e "${finished}"
-createfolder='/sdcard/HTTPNET'
-if [ ! -d $createfolder ];
-then
-  mkdir $createfolder
-fi
-checkxvzf
-clear;reset
-source <(echo 'dHRlIC0tZnJhbWUtcmF0ZSA2NjYgLWkgfi9pcEFkZHJlc3MvQUdJVEZPTERFUi8ubG9nbyAtLXJhbmRvbS1lZmZlY3QgLS1leGNsdWRlLWVmZmVjdHMgbWF0cml4' | base64 -d)
-echo -e "${black} —————————————————— ${red}[${green}INFORMATION${red}] ${black}———————————————————>
-${red} [${green}✓${red}] ${white}Creator ${red}: ${white}Niassoh Taarmos${redlite}[${yellowlite}CyberCoder${redlite}]
-${red} [${green}✓${red}] ${white}YouTube ${red}: ${purple}HackerFake424
-${red} [${green}✓${red}] ${white}Support ${red}: ${cyan}Personal CyberCoder
-${red} [${green}✓${red}] ${white}GitHub  ${red}: ${green}https://github.com/${yellowlite}Mr${whitelite}Ghost${greenlite}Official\n ${black}————————————————————————————————————————————————————>"
-echo -e "               ${bluewhitemix}First Use This⤵️${finished}"
-echo -e "            ${red}[${white}i${red}] ${green}TermuxElevated\n${finished}"
-echo -e "${red}[${white}1${red}] ${yellow}Ip Address Changer ${redlite}(${yellow}Tor${redlite})\n${finished}"
-echo -e "${red}[${white}2${red}] ${yellow}Ip Address Information\n${finished}"
-echo -e "${red}[${white}3${red}] ${yellow}Ip Address Thief\n${finished}"
-echo -e "${red}[${white}u${red}] ${whitelite}Latest Update ${red}[${white}e${red}] ${greenlite}Exit tool ${red}[${white}t${red}] ${bluelite}Telegram Us\n${finished}"
-echo -e "${black}---------------+${finished}"
-echo -n -e "[ッ]${whiteredmix}Write Enter${finished}${black}:${redlite}> ${white}"
-read type
-case $type in
-     i) clear;reset
-        source <(echo 'dHRlIC0tZnJhbWUtcmF0ZSA2NjYgLWkgJFBSRUZJWC9zaGFyZS9pZ2hvc3QvcGVybWlzc2lvbiAtLXJhbmRvbS1lZmZlY3QgLS1leGNsdWRlLWVmZmVjdHMgbWF0cml4' | base64 -d)
-        echo -e "${red}[${white}?${red}] ${cyan}If you already using my ${purple}TermuxElevated${redlite}, ${cyan}then\n    don't need again${redlite}, ${cyan}you can use this tool${redlite}, \n${cyan}   just update use${redlite}: ${greenlite}pkg ighost-install${finished}"
-        sleep 5
-        echo -e "${cyan}Url↪️${redlite}: ${yellowlite}https://github.com/MrGhostOfficial/TermuxElevated${finished}"
-        xdg-open "https://github.com/MrGhostOfficial/TermuxElevated"
-        backmenu
-     ;;
-     1) clear
-        ipchanger
-     ;;
-     2) clear
-        ipinformation
-     ;;
-     3) clear
-        python ~/AGITFOLDER/seeker/seeker.py
-     ;;
-     u) clear
-        reset
-        repo_update
-     ;;
-     t) clear
-        reset
-        telegram
-     ;;
-     e) clear
-        logout_menu
-     ;;
-     *) echo
-        echo -e " ${whitelite}[${redlite}~${whitelite}] ${bluelite}Wrong ${cyanlite}Input ${bluelite}Try ${cyanlite}Again${redlite}.${finished}"
-        sleep 3
-        main_menu
-     ;;
-esac
+
+# Spinner for long downloads (generic)
+spinner() {
+    local pid
+    sleep 5 & pid=$!
+    local delay=0.12
+    local spinner=('█■■■■' '■█■■■' '■■█■■' '■■■█■' '■■■■█')
+
+    tput civis  # hide cursor
+    while kill -0 "$pid" 2>/dev/null; do
+        for i in "${spinner[@]}"; do
+            kill -0 "$pid" 2>/dev/null || break
+            printf "\r\033[K\033[1;32mDownloading Please wait...\033[1;33m [%s]\033[0m" "$i"
+            sleep "$delay"
+        done
+    done
+    wait "$pid" 2>/dev/null
+    tput cnorm  # show cursor
+    printf "\r\033[K\033[0;31m[\033[1;32mDone!\033[0;31m]\033[0m\n"
+    echo ''
 }
-#T̂͗̋͛̏ͨ̚͜a͍͚͖͙̞̰̔ͣͩ̈̍̅̑a͈͍̐͛̎̑́͐r͏͉̖̙̲̘͎͇m̴̪ͯ̌o̰̼͔̪͈̺̟ͤ͌̓s̡͙̪̣͚̮̠͇̈
-function ipchanger(){
-clear
-source <(echo 'dHRlIC0tZnJhbWUtcmF0ZSA2NjYgLWkgfi9pcEFkZHJlc3MvQUdJVEZPTERFUi8ubG9nbzIgLS1yYW5kb20tZWZmZWN0IC0tZXhjbHVkZS1lZmZlY3RzIG1hdHJpeA' | base64 -d)
-# Launch multiple TOR instances
-echo -e "\n${red}[${white}+${red}] ${white}Launching Tor Nodes & Proxy Server${redlite}...${finished}"
 
-PORTS=(9050 9060 9070 9080 9090)
-CONTROL_PORTS=(9051 9061 9071 9081 9091)
+# Alternative progress bar
+spinner2() {
+    sleep 2 & pid=$!
+    echo -e "IT MAY TAKE SOME TIME, BE PATIENT."
+    printf "\033[0;31m["
+    for _ in {1..20}; do
+        printf "\033[1;32m▓"
+        sleep 0.10
+    done
+    wait "$pid" 2>/dev/null
+    printf "\033[0;31m] \033[1;32mdone\033[0;31m!\e[0m\n"
+    echo ''
+}
 
-for i in {0..4}; do
-    TOR_DIR="$HOME/.tor_multi/tor$i"
-    mkdir -p "$TOR_DIR"
-    cat <<EOF > "$TOR_DIR/torrc"
-SocksPort ${PORTS[$i]}
-ControlPort ${CONTROL_PORTS[$i]}
-DataDirectory $TOR_DIR
+# Extract tar.gz archive if present, then remove it and restart menu
+check_xvzf() {
+    if [[ -f "$TARBALL" ]]; then
+        if tar -xvzf "$TARBALL" -C "$EXTRACT_DIR" &>/dev/null; then
+            rm -f "$TARBALL"
+            echo "Server extracted and archive removed."
+        else
+            echo "Extraction failed (corrupt archive?)"
+        fi
+        main_menu   # restart menu after extraction
+    fi
+    # If no tarball, just return (menu continues)
+}
+
+# ---------------------------
+# Main Menu
+# ---------------------------
+main_menu() {
+    echo -e "${C_RESET}"
+
+    # Create Android storage folder if missing
+    mkdir -p "$ANDROID_DIR"
+
+    # Handle extraction before showing the menu
+    check_xvzf   # will call main_menu again if extraction happened, else returns
+
+    # If we're here, no extraction occurred → show menu
+    clear
+    reset
+    source_animation 'dHRlIC0tZnJhbWUtcmF0ZSA2NjYgLWkgfi9pcEFkZHJlc3MvQUdJVEZPTERFUi8ubG9nbyAtLXJhbmRvbS1lZmZlY3QgLS1leGNsdWRlLWVmZmVjdHMgbWF0cml4'
+
+    echo -e "${C_BLACK} —————————————————— ${C_RED}[${C_GREEN}INFORMATION${C_RED}] ${C_BLACK}———————————————————>"
+    echo -e "${C_RED} [${C_GREEN}✓${C_RED}] ${C_WHITE}Creator ${C_RED}: ${C_WHITE}Niassoh Taarmos${C_RED_L}[${C_YELLOW_L}CyberCoder${C_RED_L}]"
+    echo -e "${C_RED} [${C_GREEN}✓${C_RED}] ${C_WHITE}YouTube ${C_RED}: ${C_PURPLE}HackerFake424"
+    echo -e "${C_RED} [${C_GREEN}✓${C_RED}] ${C_WHITE}Support ${C_RED}: ${C_CYAN}Personal CyberCoder"
+    echo -e "${C_RED} [${C_GREEN}✓${C_RED}] ${C_WHITE}GitHub  ${C_RED}: ${C_GREEN}https://github.com/${C_YELLOW_L}Mr${C_WHITE_L}Ghost${C_GREEN_L}Official"
+    echo -e " ${C_BLACK}————————————————————————————————————————————————————>"
+    echo -e "               ${C_BLUE_WHITE}First Use This⤵️${C_RESET}"
+    echo -e "            ${C_RED}[${C_WHITE}i${C_RED}] ${C_GREEN}TermuxElevated${C_RESET}\n"
+    echo -e "${C_RED}[${C_WHITE}1${C_RED}] ${C_YELLOW}Ip Address Changer ${C_RED_L}(${C_YELLOW}Tor${C_RED_L})${C_RESET}\n"
+    echo -e "${C_RED}[${C_WHITE}2${C_RED}] ${C_YELLOW}Ip Address Information${C_RESET}\n"
+    echo -e "${C_RED}[${C_WHITE}3${C_RED}] ${C_YELLOW}Ip Address Thief${C_RESET}\n"
+    echo -e "${C_RED}[${C_WHITE}u${C_RED}] ${C_WHITE_L}Latest Update ${C_RED}[${C_WHITE}e${C_RED}] ${C_GREEN_L}Exit tool ${C_RED}[${C_WHITE}t${C_RED}] ${C_BLUE_L}Telegram Us${C_RESET}\n"
+    echo -e "${C_BLACK}---------------+${C_RESET}"
+    echo -ne "[ッ]${C_WHITE_RED}Write Enter${C_RESET}${C_BLACK}:${C_RED_L}> ${C_WHITE}"
+    read -r type
+
+    case "$type" in
+        i|I)
+            clear
+            reset
+            source_animation 'dHRlIC0tZnJhbWUtcmF0ZSA2NjYgLWkgJFBSRUZJWC9zaGFyZS9pZ2hvc3QvcGVybWlzc2lvbiAtLXJhbmRvbS1lZmZlY3QgLS1leGNsdWRlLWVmZmVjdHMgbWF0cml4'
+            echo -e "${C_RED}[${C_WHITE}?${C_RED}] ${C_CYAN}If you already using my ${C_PURPLE}TermuxElevated${C_RED_L}, ${C_CYAN}then"
+            echo -e "    don't need again${C_RED_L}, ${C_CYAN}you can use this tool${C_RED_L},"
+            echo -e "${C_CYAN}   just update use${C_RED_L}: ${C_GREEN_L}pkg ighost-install${C_RESET}"
+            sleep 5
+            echo -e "${C_CYAN}Url↪️${C_RED_L}: ${C_YELLOW_L}https://github.com/MrGhostOfficial/TermuxElevated${C_RESET}"
+            xdg-open "https://github.com/MrGhostOfficial/TermuxElevated"
+            back_menu
+            ;;
+        1) clear; ip_changer ;;
+        2) clear; ip_information ;;
+        3) clear; python ~/AGITFOLDER/seeker/seeker.py ;;
+        u|U) clear; reset; repo_update ;;
+        t|T) clear; reset; telegram ;;
+        e|E) clear; logout_menu ;;
+        *)
+            echo -e " ${C_WHITE_L}[${C_RED_L}~${C_WHITE_L}] ${C_BLUE_L}Wrong ${C_CYAN_L}Input ${C_BLUE_L}Try ${C_CYAN_L}Again${C_RED_L}.${C_RESET}"
+            sleep 3
+            main_menu
+            ;;
+    esac
+}
+
+# ---------------------------
+# IP Changer (TOR rotation) - FIXED: no early exit on curl failure
+# ---------------------------
+ip_changer() {
+    clear
+    source_animation 'dHRlIC0tZnJhbWUtcmF0ZSA2NjYgLWkgfi9pcEFkZHJlc3MvQUdJVEZPTERFUi8ubG9nbzIgLS1yYW5kb20tZWZmZWN0IC0tZXhjbHVkZS1lZmZlY3RzIG1hdHJpeA'
+
+    echo -e "\n${C_RED}[${C_WHITE}+${C_RED}] ${C_WHITE}Launching Tor Nodes & Proxy Server${C_RED_L}...${C_RESET}"
+
+    # --------------------------------------------------------------
+    # 1. Configuration
+    # --------------------------------------------------------------
+    readonly TOR_PORTS=(9050 9060 9070 9080 9090)
+    readonly CTRL_PORTS=(9051 9061 9071 9081 9091)
+    readonly TOR_BASE="$HOME/.tor_multi"
+    readonly PRIVOXY_CONF="$HOME/.privoxy/config"
+    readonly PRIVOXY_PORT=8118
+    readonly PROXY_URL="http://127.0.0.1:$PRIVOXY_PORT"
+    readonly API_URL="https://api64.ipify.org"
+
+    # --------------------------------------------------------------
+    # 2. Cleanup function – kills all spawned processes on exit
+    # --------------------------------------------------------------
+    cleanup() {
+        echo -e "\n${C_YELLOW}Shutting down TOR and Privoxy processes...${C_RESET}"
+        pkill -f "tor -f $TOR_BASE" 2>/dev/null || true
+        pkill -f "privoxy $PRIVOXY_CONF" 2>/dev/null || true
+        exit 0
+    }
+    trap cleanup EXIT INT TERM
+
+    # --------------------------------------------------------------
+    # 3. Check required dependencies
+    # --------------------------------------------------------------
+    for cmd in tor privoxy curl nc; do
+        if ! command -v "$cmd" &>/dev/null; then
+            echo -e "${C_RED}Error: $cmd is not installed. Please install it first.${C_RESET}"
+            sleep 2
+            back_menu
+            return
+        fi
+    done
+
+    # --------------------------------------------------------------
+    # 4. Start multiple TOR instances
+    # --------------------------------------------------------------
+    echo -e "${C_CYAN}Starting TOR daemons...${C_RESET}"
+    for i in "${!TOR_PORTS[@]}"; do
+        local tor_dir="$TOR_BASE/tor$i"
+        mkdir -p "$tor_dir"
+        cat <<EOF > "$tor_dir/torrc"
+SocksPort ${TOR_PORTS[$i]}
+ControlPort ${CTRL_PORTS[$i]}
+DataDirectory $tor_dir
 CookieAuthentication 0
 EOF
-    tor -f "$TOR_DIR/torrc" > /dev/null 2>&1 &
-    sleep 2
-done
-
-# Setup Privoxy with TOR SOCKS ports
-cat <<EOF > "$HOME/.privoxy/config"
-listen-address 127.0.0.1:8118
-EOF
-for port in "${PORTS[@]}"; do
-    echo "forward-socks5 / 127.0.0.1:$port ." >> "$HOME/.privoxy/config"
-done
-
-privoxy "$HOME/.privoxy/config" > /dev/null 2>&1 &
-
-# Ask user for IP rotation interval
-echo -ne "${black}[${green}ッ${black}]${whiteredmix}Assign IP rotation interval(ex:second, 9)${finished}${black}:${redlite}> ${white}"
-read -r ROTATION_TIME
-
-if [[ ! "$ROTATION_TIME" =~ ^[0-9]+$ ]] || [[ "$ROTATION_TIME" -lt 5 ]]; then
-    echo -e "${red}Invalid input! Using default 9 seconds.${finished}"
-    ROTATION_TIME=9
-fi
-
-# Infinite IP rotation loop
-while true; do
-    for ctrl_port in "${CONTROL_PORTS[@]}"; do
-        echo -e "AUTHENTICATE \"\"\r\nSIGNAL NEWNYM\r\nQUIT" | nc 127.0.0.1 $ctrl_port > /dev/null 2>&1
+        tor -f "$tor_dir/torrc" >/dev/null 2>&1 &
+        local tor_pid=$!
+        echo "  TOR instance $i (PID $tor_pid) on port ${TOR_PORTS[$i]}"
+        # Wait for the port to become available
+        local timeout=15
+        while ! nc -z 127.0.0.1 "${TOR_PORTS[$i]}" &>/dev/null; do
+            sleep 0.5
+            ((timeout--))
+            if [[ $timeout -eq 0 ]]; then
+                echo -e "${C_RED}Timeout waiting for TOR port ${TOR_PORTS[$i]}${C_RESET}"
+                cleanup
+                return
+            fi
+        done
+        sleep 1
     done
-    NEW_IP=$(curl --proxy http://127.0.0.1:8118 -s https://api64.ipify.org)
-    echo -e "${green}🌐 ${white}New IP${redlite}:${green} $NEW_IP ✅${finished}"
-    echo -e "${finished}[Proxy]${redlite}: ${white}127.0.0.1${redlite}:${white}8118 🛰️${finished}"
-    sleep "$ROTATION_TIME"
-done
-echo -e "\n"
-exit 0
+
+    # Give TOR extra time to bootstrap
+    echo -e "${C_YELLOW}Waiting 8 seconds for TOR to bootstrap...${C_RESET}"
+    sleep 8
+
+    # --------------------------------------------------------------
+    # 5. Configure Privoxy
+    # --------------------------------------------------------------
+    echo -e "${C_CYAN}Configuring Privoxy...${C_RESET}"
+    mkdir -p "$(dirname "$PRIVOXY_CONF")"
+    cat <<EOF > "$PRIVOXY_CONF"
+listen-address 127.0.0.1:$PRIVOXY_PORT
+EOF
+    for port in "${TOR_PORTS[@]}"; do
+        echo "forward-socks5 / 127.0.0.1:$port ." >> "$PRIVOXY_CONF"
+    done
+
+    privoxy "$PRIVOXY_CONF" >/dev/null 2>&1 &
+    local privoxy_pid=$!
+    echo "  Privoxy (PID $privoxy_pid) listening on port $PRIVOXY_PORT"
+
+    # Wait for Privoxy to be ready
+    local timeout=10
+    while ! nc -z 127.0.0.1 "$PRIVOXY_PORT" &>/dev/null; do
+        sleep 0.5
+        ((timeout--))
+        if [[ $timeout -eq 0 ]]; then
+            echo -e "${C_RED}Timeout waiting for Privoxy on port $PRIVOXY_PORT${C_RESET}"
+            cleanup
+            return
+        fi
+    done
+
+    # --------------------------------------------------------------
+    # 6. Ask for rotation interval
+    # --------------------------------------------------------------
+    echo -ne "${C_BLACK}[${C_GREEN}ッ${C_BLACK}]${C_WHITE_RED}Assign IP rotation interval in seconds (min 5)${C_RESET}${C_BLACK}:${C_RED_L}> ${C_WHITE}"
+    read -r rotation_time
+
+    while [[ ! "$rotation_time" =~ ^[0-9]+$ ]] || [[ "$rotation_time" -lt 5 ]]; do
+        echo -e "${C_RED}Invalid input. Please enter a number ≥ 5.${C_RESET}"
+        echo -ne "${C_BLACK}[${C_GREEN}ッ${C_BLACK}]${C_WHITE_RED}Rotation interval (seconds): ${C_RESET}${C_BLACK}:${C_RED_L}> ${C_WHITE}"
+        read -r rotation_time
+    done
+
+    echo -e "${C_GREEN}Rotation interval set to $rotation_time seconds.${C_RESET}"
+    echo -e "${C_YELLOW}Press 'q' and Enter to stop rotation and exit.${C_RESET}\n"
+
+    # --------------------------------------------------------------
+    # 7. Infinite IP rotation loop (keeps running)
+    # --------------------------------------------------------------
+    while true; do
+        # Send NEWNYM signal to all TOR control ports
+        for ctrl_port in "${CTRL_PORTS[@]}"; do
+            echo -e "AUTHENTICATE \"\"\r\nSIGNAL NEWNYM\r\nQUIT" | nc 127.0.0.1 "$ctrl_port" >/dev/null 2>&1
+        done
+
+        # Give Tor time to build a new circuit
+        sleep 2
+
+        # Fetch new IP via Privoxy – retry once if it fails
+        local new_ip=""
+        local attempt=0
+        while [[ $attempt -lt 2 ]]; do
+            new_ip=$(curl --proxy "$PROXY_URL" -s --connect-timeout 5 "$API_URL" 2>/dev/null || echo "")
+            if [[ -n "$new_ip" ]]; then
+                break
+            fi
+            sleep 1
+            ((attempt++))
+        done
+
+        if [[ -z "$new_ip" ]]; then
+            echo -e "${C_RED}Failed to fetch new IP (TOR may not be ready). Retrying...${C_RESET}"
+        else
+            echo -e "${C_GREEN}🌐 ${C_WHITE}New IP${C_RED_L}:${C_GREEN} $new_ip ✅${C_RESET}"
+            echo -e "${C_RESET}[Proxy]${C_RED_L}: ${C_WHITE}127.0.0.1 ${C_RED_L}: ${C_WHITE}$PRIVOXY_PORT 🛰️${C_RESET}"
+        fi
+
+        # Wait for the specified interval, but allow user to type 'q' to quit
+        for ((i=0; i<rotation_time; i++)); do
+            read -t 1 -n 1 key 2>/dev/null || true
+            if [[ "$key" == "q" ]]; then
+                echo -e "\n${C_YELLOW}Exit requested. Cleaning up...${C_RESET}"
+                cleanup
+                return
+            fi
+        done
+    done
 }
-#T̂͗̋͛̏ͨ̚͜a͍͚͖͙̞̰̔ͣͩ̈̍̅̑a͈͍̐͛̎̑́͐r͏͉̖̙̲̘͎͇m̴̪ͯ̌o̰̼͔̪͈̺̟ͤ͌̓s̡͙̪̣͚̮̠͇̈
-function ipinformation(){
-clear
-source <(echo 'dHRlIC0tZnJhbWUtcmF0ZSA2NjYgLWkgfi9pcEFkZHJlc3MvQUdJVEZPTERFUi8ubG9nbzMgLS1yYW5kb20tZWZmZWN0IC0tZXhjbHVkZS1lZmZlY3RzIG1hdHJpeA' | base64 -d)
-echo -e "                   ᶠᵘᵗᵘʳᵉ ᴬˢᶜᴵᴵ ᴬʳᵗ"
-echo -e "\n${whiteredmix}Enter Target IP${finished}${black}:${redlite}> ${white}\c"
-read ip
-echo -e "${green}Gathering information...wait.${finished}"
-python3 <<EOF
-import requests, json
+
+# ---------------------------
+# IP Information (API)
+# ---------------------------
+ip_information() {
+    clear
+    source_animation 'dHRlIC0tZnJhbWUtcmF0ZSA2NjYgLWkgfi9pcEFkZHJlc3MvQUdJVEZPTERFUi8ubG9nbzMgLS1yYW5kb20tZWZmZWN0IC0tZXhjbHVkZS1lZmZlY3RzIG1hdHJpeA'
+
+    echo -e "                   ᶠᵘᵗᵘʳᵉ ᴬˢᶜᴵᴵ ᴬʳᵗ"
+    echo -e "\n${C_WHITE_RED}Enter Target IP${C_RESET}${C_BLACK}:${C_RED_L}> ${C_WHITE}\c"
+    read -r ip
+
+    echo -e "${C_GREEN}Gathering information...wait.${C_RESET}"
+
+    python3 <<EOF
+import requests
+import json
 
 ip = "$ip"
 
@@ -252,24 +382,28 @@ ip = "$ip"
 try:
     resp1 = requests.get(f"https://ipinfo.io/{ip}/json", timeout=10)
     data1 = resp1.json() if resp1.status_code == 200 else {}
-except:
+except Exception:
     data1 = {}
+
 # Fetch from ip-api.com
 try:
     resp2 = requests.get(f"http://ip-api.com/json/{ip}?fields=status,continent,continentCode,country,countryCode,region,regionName,city,district,zip,lat,lon,timezone,offset,currency,isp,org,as,asname,mobile,proxy,hosting,query", timeout=10)
     data2 = resp2.json() if resp2.status_code == 200 else {}
-except:
+except Exception:
     data2 = {}
 
 if not data1 and not data2:
     print("\033[31mError: Both APIs failed. Check your internet.\033[0m")
     exit(1)
- #T̂͗̋͛̏ͨ̚͜a͍͚͖͙̞̰̔ͣͩ̈̍̅̑a͈͍̐͛̎̑́͐r͏͉̖̙̲̘͎͇m̴̪ͯ̌o̰̼͔̪͈̺̟ͤ͌̓s̡͙̪̣͚̮̠͇̈
-    # Display ipinfo.io, ip-api.com data
-city_display = (f"{data1.get('city','')} / {data2.get('city','')}".strip(' /') 
-                if data1.get('city') and data2.get('city') and data1.get('city') != data2.get('city')
-                else data1.get('city') or data2.get('city') or 'N/A')
-if data1 and data2 and data2.get('status') == 'success':
+
+# Display combined info
+city_display = (
+    f"{data1.get('city','')} / {data2.get('city','')}".strip(' /')
+    if data1.get('city') and data2.get('city') and data1.get('city') != data2.get('city')
+    else data1.get('city') or data2.get('city') or 'N/A'
+)
+
+if data2.get('status') == 'success':
     print("\033[1;34m======== ip-information ========\033[0m\n")
     print(f"\033[1;32mStatus\033[0m: {data2.get('status')}")
     print(f"\033[1;32mIP\033[0m: {data1.get('ip', 'N/A')}")
@@ -299,66 +433,99 @@ else:
     print("One or both APIs failed.")
 EOF
 }
-#T̂͗̋͛̏ͨ̚͜a͍͚͖͙̞̰̔ͣͩ̈̍̅̑a͈͍̐͛̎̑́͐r͏͉̖̙̲̘͎͇m̴̪ͯ̌o̰̼͔̪͈̺̟ͤ͌̓s̡͙̪̣͚̮̠͇̈
-function repo_update() {
-clear;reset
-source <(echo 'dHRlIC0tZnJhbWUtcmF0ZSA2NjYgLWkgJFBSRUZJWC9zaGFyZS9pZ2hvc3QvZ2l0LnVwZGF0ZSAtLXJhbmRvbS1lZmZlY3QgLS1leGNsdWRlLWVmZmVjdHMgbWF0cml4' | base64 -d)
-set -euo pipefail
-REPO_URL="https://github.com/MrGhostOfficial/ipAddress.git"
-TARGET="$HOME/ipAddress"
-# Create the folder if it doesn't exist
-mkdir -p "$TARGET"
-# Remove everything INSIDE the folder, but keep the folder itself
-echo -e "${blue}Target contents folder kept removed inside${redlite}:${red} $TARGET${finished}"
-rm -rf "$TARGET"/* "$TARGET"/.[!.]* "$TARGET"/..?* 2>/dev/null || true
-# Clone into a temporary directory, then move files (because git clone won't work into non-empty dir)
-echo -e "${green}Cloning fresh repository${redlite}...${finished}"
-TEMP_DIR=$(mktemp -d)
-git clone "$REPO_URL" "$TEMP_DIR"
-# Move everything from temp to target (including hidden files)
-shopt -s dotglob
-mv "$TEMP_DIR"/* "$TARGET"/ 2>/dev/null || true
-rm -rf "$TEMP_DIR"
-echo -e "${green}✓ Success${red}! ${cyan}Files are now inside $TARGET ${redlite}(${yellowlite}folder preserved${redlite})${finished}\n"
-chmod +x ipAddress
-ls "$TARGET"
-exit 0
+
+# ---------------------------
+# Repository Update
+# ---------------------------
+repo_update() {
+    clear
+    reset
+    source_animation 'dHRlIC0tZnJhbWUtcmF0ZSA2NjYgLWkgJFBSRUZJWC9zaGFyZS9pZ2hvc3QvZ2l0LnVwZGF0ZSAtLXJhbmRvbS1lZmZlY3QgLS1leGNsdWRlLWVmZmVjdHMgbWF0cml4'
+
+    local repo_url="https://github.com/MrGhostOfficial/ipAddress.git"
+    local target="$HOME/ipAddress"
+
+    mkdir -p "$target"
+    echo -e "${C_BLUE}Target contents removed (folder kept): ${C_RED_L}${C_RED}$target${C_RESET}"
+    rm -rf "$target"/* "$target"/.[!.]* "$target"/..?* 2>/dev/null || true
+
+    echo -e "${C_GREEN}Cloning fresh repository${C_RED_L}...${C_RESET}"
+    local temp_dir
+    temp_dir=$(mktemp -d)
+    git clone "$repo_url" "$temp_dir"
+
+    shopt -s dotglob
+    mv "$temp_dir"/* "$target"/ 2>/dev/null || true
+    rm -rf "$temp_dir"
+
+    echo -e "${C_GREEN}✓ Success${C_RED}! ${C_CYAN}Files are now inside $target ${C_RED_L}(${C_YELLOW_L}folder preserved${C_RED_L})${C_RESET}\n"
+    chmod +x ipAddress
+    ls "$target"
+    exit 0
 }
-#T̂͗̋͛̏ͨ̚͜a͍͚͖͙̞̰̔ͣͩ̈̍̅̑a͈͍̐͛̎̑́͐r͏͉̖̙̲̘͎͇m̴̪ͯ̌o̰̼͔̪͈̺̟ͤ͌̓s̡͙̪̣͚̮̠͇̈
-function telegram(){
-clear;reset
-source <(echo 'dHRlIC0tZnJhbWUtcmF0ZSA2NjYgLWkgJFBSRUZJWC9zaGFyZS9pZ2hvc3QvdGVsZWdyYW0gLS1yYW5kb20tZWZmZWN0IC0tZXhjbHVkZS1lZmZlY3RzIG1hdHJpeA' | base64 -d)
-echo -e "${red}[${green}INFO${red}] ${cyan}Hello User${redlite}, ${cyan}if you facing any issues about my projects${redlite}, ${cyan}Then give me your issues screenshot and write about your issues in telegram group${redlite}, ${cyan}if You have also github account then dont forget to Follow${redlite}/${cyan}Stars Me on GitHub${redlite}, ${cyan}Thanks for with us ENJOY${redlite}.${cyan}(👾)${finished}"
-sleep 3
-echo -e "${cyan}Url↪️${redlite}: ${yellowlite}https://t.me/NetCyberCoder${finished}"
-termux-open-url "https://t.me/NetCyberCoder"
-backmenu
+
+# ---------------------------
+# Telegram Group
+# ---------------------------
+telegram() {
+    clear
+    reset
+    source_animation 'dHRlIC0tZnJhbWUtcmF0ZSA2NjYgLWkgJFBSRUZJWC9zaGFyZS9pZ2hvc3QvdGVsZWdyYW0gLS1yYW5kb20tZWZmZWN0IC0tZXhjbHVkZS1lZmZlY3RzIG1hdHJpeA'
+
+    echo -e "${C_RED}[${C_GREEN}INFO${C_RED}] ${C_CYAN}Hello User${C_RED_L}, ${C_CYAN}if you facing any issues about my projects${C_RED_L}, ${C_CYAN}Then give me your issues screenshot and write about your issues in telegram group${C_RED_L}, ${C_CYAN}if You have also github account then dont forget to Follow${C_RED_L}/${C_CYAN}Stars Me on GitHub${C_RED_L}, ${C_CYAN}Thanks for with us ENJOY${C_RED_L}.${C_CYAN}(👾)${C_RESET}"
+    sleep 3
+    echo -e "${C_CYAN}Url↪️${C_RED_L}: ${C_YELLOW_L}https://t.me/NetCyberCoder${C_RESET}"
+    termux-open-url "https://t.me/NetCyberCoder"
+    back_menu
 }
-#T̂͗̋͛̏ͨ̚͜a͍͚͖͙̞̰̔ͣͩ̈̍̅̑a͈͍̐͛̎̑́͐r͏͉̖̙̲̘͎͇m̴̪ͯ̌o̰̼͔̪͈̺̟ͤ͌̓s̡͙̪̣͚̮̠͇̈
-function backmenu(){
-echo -e "${finished}"
-echo -e "${purplelite}if you dont understand how to Use it then follow\nme telegram group or my youtube channel.\n  ${black}+----------${red}[ ${whitelite}Secondary~Menu${red} ]${black}--------------+\n   | ${red}[${green}1${red}] ${yellow}Main-menu                          ${black}|\n   | ${red}[${white}e${red}] ${yellow}Exit                               ${black}|\n   ${black}+----------------------------------------+${finished}\n"
-echo -n -e "[ッ]${whiteredmix}Write Enter${finished}${black}:${redlite}> ${white}"
-read type
-case $type in
-      1) main_menu
-      ;;
-      e) logout_menu
-      ;;
-      *) echo
-         echo -e " ${whitelite}[${redlite}~${whitelite}] ${bluelite}Wrong ${cyanlite}Input ${bluelite}Try ${cyanlite}Again${redlite}.${finished}"
-         sleep 3
-         backmenu
-      ;;
-esac
+
+# ---------------------------
+# Secondary Menu (Back)
+# ---------------------------
+back_menu() {
+    echo -e "${C_RESET}"
+    echo -e "${C_PURPLE_L}if you dont understand how to Use it then follow"
+    echo -e "me telegram group or my youtube channel."
+    echo -e "  ${C_BLACK}+----------${C_RED}[ ${C_WHITE_L}Secondary~Menu${C_RED} ]${C_BLACK}--------------+"
+    echo -e "   | ${C_RED}[${C_GREEN}1${C_RED}] ${C_YELLOW}Main-menu                          ${C_BLACK}|"
+    echo -e "   | ${C_RED}[${C_WHITE}e${C_RED}] ${C_YELLOW}Exit                               ${C_BLACK}|"
+    echo -e "   ${C_BLACK}+----------------------------------------+${C_RESET}\n"
+    echo -ne "[ッ]${C_WHITE_RED}Write Enter${C_RESET}${C_BLACK}:${C_RED_L}> ${C_WHITE}"
+    read -r type
+
+    case "$type" in
+        1) main_menu ;;
+        e|E) logout_menu ;;
+        *)
+            echo -e " ${C_WHITE_L}[${C_RED_L}~${C_WHITE_L}] ${C_BLUE_L}Wrong ${C_CYAN_L}Input ${C_BLUE_L}Try ${C_CYAN_L}Again${C_RED_L}.${C_RESET}"
+            sleep 3
+            back_menu
+            ;;
+    esac
 }
-#T̂͗̋͛̏ͨ̚͜a͍͚͖͙̞̰̔ͣͩ̈̍̅̑a͈͍̐͛̎̑́͐r͏͉̖̙̲̘͎͇m̴̪ͯ̌o̰̼͔̪͈̺̟ͤ͌̓s̡͙̪̣͚̮̠͇̈
-function logout_menu(){
-clear;reset
-source <(echo 'dHRlIC0tZnJhbWUtcmF0ZSA2NjYgLWkgJFBSRUZJWC9zaGFyZS9pZ2hvc3QvbG9nb3V0IC0tcmFuZG9tLWVmZmVjdCAtLWV4Y2x1ZGUtZWZmZWN0cyBtYXRyaXg' | base64 -d)
-echo -e "   ${black}+----------------------------------------+\n${black}   |     ${green}Join telegram group Account.       ${black}|\n${black}   |        ${yellow}@NetCyberCoder                  ${black}|\n   ${black}|----------------------------------------|\n${black}   |           ${cyan}Bye Bye ${white}( ${red}^${cyan}_${red}^ ${white})${whitelite}/             ${black}|\n   ${black}+----------------------------------------+${finished}"
-echo -e "        ${purplelite}Friends keep supporting me and \n        ${yellowlite}Motivating me for making projects\n        ${greenlite}FOR YOU ENJOY..👾\n        ${redlite}see you at next time bye!\n"
-exit 0
+
+# ---------------------------
+# Exit / Logout
+# ---------------------------
+logout_menu() {
+    clear
+    reset
+    source_animation 'dHRlIC0tZnJhbWUtcmF0ZSA2NjYgLWkgJFBSRUZJWC9zaGFyZS9pZ2hvc3QvbG9nb3V0IC0tcmFuZG9tLWVmZmVjdCAtLWV4Y2x1ZGUtZWZmZWN0cyBtYXRyaXg'
+
+    echo -e "   ${C_BLACK}+----------------------------------------+"
+    echo -e "${C_BLACK}   |     ${C_GREEN}Join telegram group Account.       ${C_BLACK}|"
+    echo -e "${C_BLACK}   |        ${C_YELLOW}@NetCyberCoder                  ${C_BLACK}|"
+    echo -e "   ${C_BLACK}|----------------------------------------|"
+    echo -e "${C_BLACK}   |           ${C_CYAN}Bye Bye ${C_WHITE}( ${C_RED}^${C_CYAN}_${C_RED}^ ${C_WHITE})${C_WHITE_L}/             ${C_BLACK}|"
+    echo -e "   ${C_BLACK}+----------------------------------------+${C_RESET}"
+    echo -e "        ${C_PURPLE_L}Friends keep supporting me and"
+    echo -e "        ${C_YELLOW_L}Motivating me for making projects"
+    echo -e "        ${C_GREEN_L}FOR YOU ENJOY..👾"
+    echo -e "        ${C_RED_L}see you at next time bye!"
+    exit 0
 }
-#T̂͗̋͛̏ͨ̚͜a͍͚͖͙̞̰̔ͣͩ̈̍̅̑a͈͍̐͛̎̑́͐r͏͉̖̙̲̘͎͇m̴̪ͯ̌o̰̼͔̪͈̺̟ͤ͌̓s̡͙̪̣͚̮̠͇̈
+
+# ---------------------------
+# Entry Point
+# ---------------------------
 main_menu
