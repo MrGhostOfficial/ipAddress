@@ -201,7 +201,8 @@ main_menu() {
 # ---------------------------
 ip_changer() {
     clear
-    source_animation 'dHRlIC0tZnJhbWUtcmF0ZSA2NjYgLWkgfi9pcEFkZHJlc3MvQUdJVEZPTERFUi8ubG9nbzIgLS1yYW5kb20tZWZmZWN0IC0tZXhjbHVkZS1lZmZlY3RzIG1hdHJpeA'
+    # Ignore any error from the animation (tte may have typos)
+    source_animation 'dHRlIC0tZnJhbWUtcmF0ZSA2NjYgLWkgfi9pcEFkZHJlc3MvQUdJVEZPTERFUi8ubG9nbzIgLS1yYW5kb20tZWZmZWN0IC0tZXhjbHVkZS1lZmZlY3RzIG1hdHJpeA' || true
 
     echo -e "\n${C_RED}[${C_WHITE}+${C_RED}] ${C_WHITE}Launching Tor Nodes & Proxy Server${C_RED_L}...${C_RESET}"
 
@@ -317,45 +318,52 @@ EOF
     echo -e "${C_YELLOW}Press 'q' and Enter to stop rotation and exit.${C_RESET}\n"
 
     # --------------------------------------------------------------
-    # 7. Infinite IP rotation loop (keeps running)
+    # 7. Infinite IP rotation loop (keeps running forever)
     # --------------------------------------------------------------
     while true; do
-        # Send NEWNYM signal to all TOR control ports
-        for ctrl_port in "${CTRL_PORTS[@]}"; do
-            echo -e "AUTHENTICATE \"\"\r\nSIGNAL NEWNYM\r\nQUIT" | nc 127.0.0.1 "$ctrl_port" >/dev/null 2>&1
-        done
+        # Run the entire loop body in a subshell with error handling
+        {
+            # Send NEWNYM signal to all TOR control ports (ignore failures)
+            for ctrl_port in "${CTRL_PORTS[@]}"; do
+                echo -e "AUTHENTICATE \"\"\r\nSIGNAL NEWNYM\r\nQUIT" | nc 127.0.0.1 "$ctrl_port" >/dev/null 2>&1 || true
+            done
 
-        # Give Tor time to build a new circuit
-        sleep 2
+            # Give Tor time to build a new circuit
+            sleep 2
 
-        # Fetch new IP via Privoxy – retry once if it fails
-        local new_ip=""
-        local attempt=0
-        while [[ $attempt -lt 2 ]]; do
-            new_ip=$(curl --proxy "$PROXY_URL" -s --connect-timeout 5 "$API_URL" 2>/dev/null || echo "")
-            if [[ -n "$new_ip" ]]; then
-                break
+            # Fetch new IP via Privoxy – retry up to 3 times
+            local new_ip=""
+            local attempt=0
+            while [[ $attempt -lt 3 ]]; do
+                new_ip=$(curl --proxy "$PROXY_URL" -s --connect-timeout 5 "$API_URL" 2>/dev/null || echo "")
+                if [[ -n "$new_ip" ]]; then
+                    break
+                fi
+                sleep 1
+                ((attempt++))
+            done
+
+            if [[ -z "$new_ip" ]]; then
+                echo -e "${C_RED}Failed to fetch new IP (retrying in ${rotation_time}s)...${C_RESET}"
+            else
+                echo -e "${C_GREEN}🌐 ${C_WHITE}New IP${C_RED_L}:${C_GREEN} $new_ip ✅${C_RESET}"
+                echo -e "${C_RESET}[Proxy]${C_RED_L}: ${C_WHITE}127.0.0.1 ${C_RED_L}: ${C_WHITE}$PRIVOXY_PORT 🛰️${C_RESET}"
             fi
-            sleep 1
-            ((attempt++))
-        done
 
-        if [[ -z "$new_ip" ]]; then
-            echo -e "${C_RED}Failed to fetch new IP (TOR may not be ready). Retrying...${C_RESET}"
-        else
-            echo -e "${C_GREEN}🌐 ${C_WHITE}New IP${C_RED_L}:${C_GREEN} $new_ip ✅${C_RESET}"
-            echo -e "${C_RESET}[Proxy]${C_RED_L}: ${C_WHITE}127.0.0.1 ${C_RED_L}: ${C_WHITE}$PRIVOXY_PORT 🛰️${C_RESET}"
-        fi
-
-        # Wait for the specified interval, but allow user to type 'q' to quit
-        for ((i=0; i<rotation_time; i++)); do
-            read -t 1 -n 1 key 2>/dev/null || true
-            if [[ "$key" == "q" ]]; then
-                echo -e "\n${C_YELLOW}Exit requested. Cleaning up...${C_RESET}"
-                cleanup
-                return
-            fi
-        done
+            # Wait for the interval, but allow 'q' to quit
+            for ((i=0; i<rotation_time; i++)); do
+                read -t 1 -n 1 key 2>/dev/null || true
+                if [[ "$key" == "q" ]]; then
+                    echo -e "\n${C_YELLOW}Exit requested. Cleaning up...${C_RESET}"
+                    cleanup
+                    return
+                fi
+            done
+        } || {
+            # If any error occurred inside the subshell, just continue the outer loop
+            echo -e "${C_YELLOW}An error occurred in the rotation cycle, but we continue...${C_RESET}"
+            sleep 2
+        }
     done
 }
 
