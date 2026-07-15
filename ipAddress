@@ -339,23 +339,23 @@ EOF
                 fi
             done
 
-            echo -e "${C_YELLOW}Testing proxy (up to 15 attempts)...${C_RESET}"
+            # ------------------------------------------
+            # দ্রুত টেস্টিং – ৫টি Attempt, ০.৫ সেকেন্ড বিরতি
+            # ------------------------------------------
+            echo -e "${C_YELLOW}Testing proxy (up to 5 attempts, fast)...${C_RESET}"
             local test_ok=0
-            for t in {1..15}; do
-                # Print attempt on a single line (overwrite)
-                printf "\r${C_YELLOW}Attempt %2d/15: waiting for circuit...${C_RESET}" "$t"
-                local test_ip=$(curl --proxy "$PROXY_URL" -s --connect-timeout 3 "$API_URL" 2>/dev/null || echo "")
+            for t in {1..5}; do
+                printf "\r${C_YELLOW}Attempt %d/5: waiting for circuit...${C_RESET}" "$t"
+                local test_ip=$(curl --proxy "$PROXY_URL" -s --connect-timeout 2 "$API_URL" 2>/dev/null || echo "")
                 if [[ -n "$test_ip" ]]; then
                     printf "\r${C_GREEN}Proxy test SUCCESS – IP: $test_ip                 ${C_RESET}\n"
                     test_ok=1
                     break
                 fi
-                sleep 1
+                sleep 0.5
             done
-
-            # If loop finishes without success, print a newline
             if [[ $test_ok -eq 0 ]]; then
-                printf "\n"
+                printf "\n"   # নতুন লাইনে যাওয়ার জন্য
             fi
 
             if [[ $test_ok -eq 1 ]]; then
@@ -419,7 +419,7 @@ EOF
             local new_ip=""
             local attempt=0
             while [[ $attempt -lt 5 ]]; do
-                new_ip=$(curl --proxy "$PROXY_URL" -s --connect-timeout 3 "$API_URL" 2>/dev/null || echo "")
+                new_ip=$(curl --proxy "$PROXY_URL" -s --connect-timeout 2 "$API_URL" 2>/dev/null || echo "")
                 if [[ -n "$new_ip" ]]; then
                     break
                 fi
