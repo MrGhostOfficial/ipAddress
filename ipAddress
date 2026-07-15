@@ -48,7 +48,7 @@ readonly C_RESET='\e[0m'
 # Prints a base64‑decoded command and sources it (used for animations)
 source_animation() {
     local encoded="$1"
-    source <(echo "$encoded" | base64 -d)
+    source <(echo "$encoded" | base64 -d) 2>/dev/null || true
 }
 
 # Check internet connectivity
@@ -197,14 +197,34 @@ main_menu() {
 }
 
 # ---------------------------
-# IP Changer (TOR rotation) - FIXED: no early exit on curl failure
+# IP Changer (TOR rotation) – with preferred country selection
 # ---------------------------
 ip_changer() {
     clear
-    # Ignore any error from the animation (tte may have typos)
     source_animation 'dHRlIC0tZnJhbWUtcmF0ZSA2NjYgLWkgfi9pcEFkZHJlc3MvQUdJVEZPTERFUi8ubG9nbzIgLS1yYW5kb20tZWZmZWN0IC0tZXhjbHVkZS1lZmZlY3RzIG1hdHJpeA' || true
 
     echo -e "\n${C_RED}[${C_WHITE}+${C_RED}] ${C_WHITE}Launching Tor Nodes & Proxy Server${C_RED_L}...${C_RESET}"
+
+    # --------------------------------------------------------------
+    # 0. Ask for preferred exit countries – with a recommended list
+    # --------------------------------------------------------------
+    local RECOMMENDED="US, DE, NL, FR, CA, GB"
+    echo -e "${C_YELLOW}Tip: High‑speed exit countries: ${RECOMMENDED}${C_RESET}"
+    echo -e "${C_YELLOW}For best reliability, press Enter to use any exit node.${C_RESET}"
+    echo -ne "${C_YELLOW}Enter preferred exit country codes (comma separated) or press Enter for any: ${C_WHITE}"
+    read -r country_input
+
+    local exit_nodes_config=""
+    local strict_mode=0
+    if [[ -n "$country_input" ]]; then
+        local countries=$(echo "$country_input" | tr -d ' ' | tr 'a-z' 'A-Z')
+        exit_nodes_config="ExitNodes {${countries//,/ }, }"
+        exit_nodes_config=$(echo "$exit_nodes_config" | sed 's/{ , /{/g' | sed 's/, }/}/g')
+        echo -e "${C_GREEN}Using strict exit nodes: ${countries} (may take longer)${C_RESET}"
+        strict_mode=1
+    else
+        echo -e "${C_CYAN}Using any available exit node (fast and reliable)${C_RESET}"
+    fi
 
     # --------------------------------------------------------------
     # 1. Configuration
@@ -218,7 +238,7 @@ ip_changer() {
     readonly API_URL="https://api64.ipify.org"
 
     # --------------------------------------------------------------
-    # 2. Cleanup function – kills all spawned processes on exit
+    # 2. Cleanup – runs on Ctrl+C or exit
     # --------------------------------------------------------------
     cleanup() {
         echo -e "\n${C_YELLOW}Shutting down TOR and Privoxy processes...${C_RESET}"
@@ -229,11 +249,11 @@ ip_changer() {
     trap cleanup EXIT INT TERM
 
     # --------------------------------------------------------------
-    # 3. Check required dependencies
+    # 3. Dependencies
     # --------------------------------------------------------------
     for cmd in tor privoxy curl nc; do
         if ! command -v "$cmd" &>/dev/null; then
-            echo -e "${C_RED}Error: $cmd is not installed. Please install it first.${C_RESET}"
+            echo -e "${C_RED}Error: $cmd is not installed. Please install it.${C_RESET}"
             sleep 2
             back_menu
             return
@@ -241,71 +261,139 @@ ip_changer() {
     done
 
     # --------------------------------------------------------------
-    # 4. Start multiple TOR instances
+    # 4. Start Tor with optional strict nodes
     # --------------------------------------------------------------
-    echo -e "${C_CYAN}Starting TOR daemons...${C_RESET}"
-    for i in "${!TOR_PORTS[@]}"; do
-        local tor_dir="$TOR_BASE/tor$i"
-        mkdir -p "$tor_dir"
-        cat <<EOF > "$tor_dir/torrc"
-SocksPort ${TOR_PORTS[$i]}
-ControlPort ${CTRL_PORTS[$i]}
-DataDirectory $tor_dir
-CookieAuthentication 0
+    start_tor() {
+        local strict=$1
+        local config_extra=""
+        if [[ $strict -eq 1 ]] && [[ -n "$exit_nodes_config" ]]; then
+            config_extra="$exit_nodes_config"$'\n'"StrictNodes 1"
+        fi
+
+        echo -e "${C_CYAN}Starting TOR daemons (StrictNodes=$strict)...${C_RESET}"
+        for i in "${!TOR_PORTS[@]}"; do
+            local tor_dir="$TOR_BASE/tor$i"
+            mkdir -p "$tor_dir"
+            {
+                echo "SocksPort ${TOR_PORTS[$i]}"
+                echo "ControlPort ${CTRL_PORTS[$i]}"
+                echo "DataDirectory $tor_dir"
+                echo "CookieAuthentication 0"
+                [[ -n "$config_extra" ]] && echo "$config_extra"
+            } > "$tor_dir/torrc"
+
+            tor -f "$tor_dir/torrc" >/dev/null 2>&1 &
+            local tor_pid=$!
+            echo "  TOR instance $i (PID $tor_pid) on port ${TOR_PORTS[$i]}"
+            local timeout=40
+            while ! nc -z 127.0.0.1 "${TOR_PORTS[$i]}" &>/dev/null; do
+                sleep 0.5
+                ((timeout--))
+                if [[ $timeout -eq 0 ]]; then
+                    echo -e "${C_RED}Timeout waiting for TOR port ${TOR_PORTS[$i]}${C_RESET}"
+                    pkill -f "tor -f $TOR_BASE" 2>/dev/null || true
+                    return 1
+                fi
+            done
+            sleep 1
+        done
+        return 0
+    }
+
+    # --------------------------------------------------------------
+    # 5. Start Tor, fallback if strict fails
+    # --------------------------------------------------------------
+    local strict_used=$strict_mode
+    local tor_ok=0
+
+    while [[ $tor_ok -eq 0 ]]; do
+        pkill -f "tor -f $TOR_BASE" 2>/dev/null || true
+        pkill -f "privoxy $PRIVOXY_CONF" 2>/dev/null || true
+        sleep 2
+
+        if start_tor $strict_used; then
+            echo -e "${C_YELLOW}Waiting 12 seconds for Tor to bootstrap...${C_RESET}"
+            sleep 12
+
+            echo -e "${C_CYAN}Configuring Privoxy...${C_RESET}"
+            mkdir -p "$(dirname "$PRIVOXY_CONF")"
+            cat <<EOF > "$PRIVOXY_CONF"
+listen-address 127.0.0.1:$PRIVOXY_PORT
 EOF
-        tor -f "$tor_dir/torrc" >/dev/null 2>&1 &
-        local tor_pid=$!
-        echo "  TOR instance $i (PID $tor_pid) on port ${TOR_PORTS[$i]}"
-        # Wait for the port to become available
-        local timeout=15
-        while ! nc -z 127.0.0.1 "${TOR_PORTS[$i]}" &>/dev/null; do
-            sleep 0.5
-            ((timeout--))
-            if [[ $timeout -eq 0 ]]; then
-                echo -e "${C_RED}Timeout waiting for TOR port ${TOR_PORTS[$i]}${C_RESET}"
+            for port in "${TOR_PORTS[@]}"; do
+                echo "forward-socks5 / 127.0.0.1:$port ." >> "$PRIVOXY_CONF"
+            done
+
+            privoxy "$PRIVOXY_CONF" >/dev/null 2>&1 &
+            local privoxy_pid=$!
+            echo "  Privoxy (PID $privoxy_pid) listening on port $PRIVOXY_PORT"
+
+            local timeout=10
+            while ! nc -z 127.0.0.1 "$PRIVOXY_PORT" &>/dev/null; do
+                sleep 0.5
+                ((timeout--))
+                if [[ $timeout -eq 0 ]]; then
+                    echo -e "${C_RED}Timeout waiting for Privoxy${C_RESET}"
+                    cleanup
+                    return
+                fi
+            done
+
+            echo -e "${C_YELLOW}Testing proxy (up to 15 attempts)...${C_RESET}"
+            local test_ok=0
+            for t in {1..15}; do
+                # Print attempt on a single line (overwrite)
+                printf "\r${C_YELLOW}Attempt %2d/15: waiting for circuit...${C_RESET}" "$t"
+                local test_ip=$(curl --proxy "$PROXY_URL" -s --connect-timeout 3 "$API_URL" 2>/dev/null || echo "")
+                if [[ -n "$test_ip" ]]; then
+                    printf "\r${C_GREEN}Proxy test SUCCESS – IP: $test_ip                 ${C_RESET}\n"
+                    test_ok=1
+                    break
+                fi
+                sleep 1
+            done
+
+            # If loop finishes without success, print a newline
+            if [[ $test_ok -eq 0 ]]; then
+                printf "\n"
+            fi
+
+            if [[ $test_ok -eq 1 ]]; then
+                tor_ok=1
+                break
+            else
+                echo -e "${C_RED}Proxy test failed with StrictNodes=$strict_used.${C_RESET}"
+                if [[ $strict_used -eq 1 ]]; then
+                    echo -e "${C_YELLOW}Switching to ANY exit node (StrictNodes=0) and retrying...${C_RESET}"
+                    strict_used=0
+                    exit_nodes_config=""
+                    continue
+                else
+                    echo -e "${C_RED}Even without restrictions, Tor did not work.${C_RESET}"
+                    echo -e "${C_YELLOW}Continuing anyway – the rotation loop will keep retrying.${C_RESET}"
+                    tor_ok=1
+                    break
+                fi
+            fi
+        else
+            echo -e "${C_RED}Failed to start Tor with StrictNodes=$strict_used.${C_RESET}"
+            if [[ $strict_used -eq 1 ]]; then
+                strict_used=0
+                exit_nodes_config=""
+                echo -e "${C_YELLOW}Retrying without restrictions...${C_RESET}"
+                continue
+            else
+                echo -e "${C_RED}Cannot start Tor at all. Exiting.${C_RESET}"
                 cleanup
                 return
             fi
-        done
-        sleep 1
-    done
-
-    # Give TOR extra time to bootstrap
-    echo -e "${C_YELLOW}Waiting 8 seconds for TOR to bootstrap...${C_RESET}"
-    sleep 8
-
-    # --------------------------------------------------------------
-    # 5. Configure Privoxy
-    # --------------------------------------------------------------
-    echo -e "${C_CYAN}Configuring Privoxy...${C_RESET}"
-    mkdir -p "$(dirname "$PRIVOXY_CONF")"
-    cat <<EOF > "$PRIVOXY_CONF"
-listen-address 127.0.0.1:$PRIVOXY_PORT
-EOF
-    for port in "${TOR_PORTS[@]}"; do
-        echo "forward-socks5 / 127.0.0.1:$port ." >> "$PRIVOXY_CONF"
-    done
-
-    privoxy "$PRIVOXY_CONF" >/dev/null 2>&1 &
-    local privoxy_pid=$!
-    echo "  Privoxy (PID $privoxy_pid) listening on port $PRIVOXY_PORT"
-
-    # Wait for Privoxy to be ready
-    local timeout=10
-    while ! nc -z 127.0.0.1 "$PRIVOXY_PORT" &>/dev/null; do
-        sleep 0.5
-        ((timeout--))
-        if [[ $timeout -eq 0 ]]; then
-            echo -e "${C_RED}Timeout waiting for Privoxy on port $PRIVOXY_PORT${C_RESET}"
-            cleanup
-            return
         fi
     done
 
     # --------------------------------------------------------------
-    # 6. Ask for rotation interval
+    # 6. Rotation interval
     # --------------------------------------------------------------
-    echo -ne "${C_BLACK}[${C_GREEN}ッ${C_BLACK}]${C_WHITE_RED}Assign IP rotation interval in seconds (min 5)${C_RESET}${C_BLACK}:${C_RED_L}> ${C_WHITE}"
+    echo -ne "${C_BLACK}[${C_GREEN}ッ${C_BLACK}]${C_WHITE_RED}Assign IP rotation interval in seconds (min 5): ${C_RESET}${C_BLACK}:${C_RED_L}> ${C_WHITE}"
     read -r rotation_time
 
     while [[ ! "$rotation_time" =~ ^[0-9]+$ ]] || [[ "$rotation_time" -lt 5 ]]; do
@@ -315,27 +403,23 @@ EOF
     done
 
     echo -e "${C_GREEN}Rotation interval set to $rotation_time seconds.${C_RESET}"
-    echo -e "${C_YELLOW}Press 'q' and Enter to stop rotation and exit.${C_RESET}\n"
+    echo -e "${C_YELLOW}Press Ctrl+C to stop rotation and exit.${C_RESET}\n"
 
     # --------------------------------------------------------------
-    # 7. Infinite IP rotation loop (keeps running forever)
+    # 7. Infinite rotation loop – Ctrl+C triggers cleanup
     # --------------------------------------------------------------
     while true; do
-        # Run the entire loop body in a subshell with error handling
         {
-            # Send NEWNYM signal to all TOR control ports (ignore failures)
             for ctrl_port in "${CTRL_PORTS[@]}"; do
                 echo -e "AUTHENTICATE \"\"\r\nSIGNAL NEWNYM\r\nQUIT" | nc 127.0.0.1 "$ctrl_port" >/dev/null 2>&1 || true
             done
 
-            # Give Tor time to build a new circuit
             sleep 2
 
-            # Fetch new IP via Privoxy – retry up to 3 times
             local new_ip=""
             local attempt=0
-            while [[ $attempt -lt 3 ]]; do
-                new_ip=$(curl --proxy "$PROXY_URL" -s --connect-timeout 5 "$API_URL" 2>/dev/null || echo "")
+            while [[ $attempt -lt 5 ]]; do
+                new_ip=$(curl --proxy "$PROXY_URL" -s --connect-timeout 3 "$API_URL" 2>/dev/null || echo "")
                 if [[ -n "$new_ip" ]]; then
                     break
                 fi
@@ -350,18 +434,10 @@ EOF
                 echo -e "${C_RESET}[Proxy]${C_RED_L}: ${C_WHITE}127.0.0.1 ${C_RED_L}: ${C_WHITE}$PRIVOXY_PORT 🛰️${C_RESET}"
             fi
 
-            # Wait for the interval, but allow 'q' to quit
-            for ((i=0; i<rotation_time; i++)); do
-                read -t 1 -n 1 key 2>/dev/null || true
-                if [[ "$key" == "q" ]]; then
-                    echo -e "\n${C_YELLOW}Exit requested. Cleaning up...${C_RESET}"
-                    cleanup
-                    return
-                fi
-            done
+            sleep "$rotation_time"
+
         } || {
-            # If any error occurred inside the subshell, just continue the outer loop
-            echo -e "${C_YELLOW}An error occurred in the rotation cycle, but we continue...${C_RESET}"
+            echo -e "${C_YELLOW}Cycle error – continuing...${C_RESET}"
             sleep 2
         }
     done
@@ -478,7 +554,7 @@ repo_update() {
 telegram() {
     clear
     reset
-    source_animation 'dHRlIC0tZnJhbWUtcmF0ZSA2NjYgLWkgJFBSRUZJWC9zaGFyZS9pZ2hvc3QvdGVsZWdyYW0gLS1yYW5kb20tZWZmZWN0IC0tZXhjbHVkZS1lZmZlY3RzIG1hdHJpeA'
+    source_animation 'dHRlIC0tZnJhbWUtcmF0ZSA2NjYgLWkgJFBSRUZJWC9zaGFyZS9pZ2hvc3QvdGVsZWdyYW0gLS1yYW5kb20tZmZmZWN0IC0tZXhjbHVkZS1lZmZlY3RzIG1hdHJpeA'
 
     echo -e "${C_RED}[${C_GREEN}INFO${C_RED}] ${C_CYAN}Hello User${C_RED_L}, ${C_CYAN}if you facing any issues about my projects${C_RED_L}, ${C_CYAN}Then give me your issues screenshot and write about your issues in telegram group${C_RED_L}, ${C_CYAN}if You have also github account then dont forget to Follow${C_RED_L}/${C_CYAN}Stars Me on GitHub${C_RED_L}, ${C_CYAN}Thanks for with us ENJOY${C_RED_L}.${C_CYAN}(👾)${C_RESET}"
     sleep 3
