@@ -155,7 +155,7 @@ main_menu() {
 
     echo -e "${C_BLACK} —————————————————— ${C_RED}[${C_GREEN}INFORMATION${C_RED}] ${C_BLACK}———————————————————>"
     echo -e "${C_RED} [${C_GREEN}✓${C_RED}] ${C_WHITE}Creator ${C_RED}: ${C_WHITE}Niassoh Taarmos${C_RED_L}[${C_YELLOW_L}CyberCoder${C_RED_L}]"
-    echo -e "${C_RED} [${C_GREEN}✓${C_RED}] ${C_WHITE}YouTube ${C_RED}: ${C_PURPLE}HackerFake424"
+    echo -e "${C_RED} [${C_GREEN}✓${C_RED}] ${C_WHITE}YouTube ${C_RED}: ${C_PURPLE}iShortcutGamer"
     echo -e "${C_RED} [${C_GREEN}✓${C_RED}] ${C_WHITE}Support ${C_RED}: ${C_CYAN}Personal CyberCoder"
     echo -e "${C_RED} [${C_GREEN}✓${C_RED}] ${C_WHITE}GitHub  ${C_RED}: ${C_GREEN}https://github.com/${C_YELLOW_L}Mr${C_WHITE_L}Ghost${C_GREEN_L}Official"
     echo -e " ${C_BLACK}————————————————————————————————————————————————————>"
